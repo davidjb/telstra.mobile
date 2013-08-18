@@ -1,3 +1,5 @@
+.. contents::
+
 Telstra Prepaid module for Python
 =================================
 
