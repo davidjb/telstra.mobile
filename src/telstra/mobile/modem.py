@@ -1,115 +1,43 @@
-import datetime
-import re
 import logging
 import serialenum
 from gsmmodem.modem import GsmModem
 from gsmmodem.exceptions import TimeoutException
 from serial import SerialException
-
 logging.basicConfig(level=logging.DEBUG)
 
-class Modem(GsmModem):
-    """ Corrections and adjustments for our modem / country.
+
+
+def autodetect_modem(check_fn=None, modem_options={'baudrate': 9600}):
+    """ Autodetect a suitable cellular modem connected to the system.
+
+    :param check_cn: Callable that should take a single ``modem`` argument
+        and return True if the modem instance is suitable.
+    :param modem_options: Structure to pass as keyword arguments to ``GsmModem``
+        initialisation.
+    :type modem_options: dict-like
+    :returns: Connected modem instance
+    :rtype: :class:`gsmmodem.modem.GsmModem`
+
+    This method will iterate through all potential serial ports on the system
+    and attempt to ``connect()`` to each of them in turn.  The first serial
+    port that connects successfully, and passes the ``check_fn(modem)`` call
+    (if ``check_fn`` is specified), will be returned.
+
+    All other unsuccessful connections will be closed during the process.
     """
-    def _handleUssd(self, lines):
-        """ Join mutli-line USSD responses back together and split.
-        """
-        joined_lines = '\r\n'.join(lines)
-	fixed_lines = re.findall('\+CUSD:\s*\d,".*?",\d+',
-                                 joined_lines,
-                                 re.DOTALL)
-        return super(Modem, self)._handleUssd(fixed_lines)
-
-class PrepaidAccount(object):
-
-    def __init__(self, modem):
-	self.modem = modem
-
-    @classmethod
-    def parse_menu(cls, ussd):
-	""" Attempt to parse the menu options into a traversable structure.
-	"""
-	menu_items = ussd.message.split('\r\n')
-	menu = {}
-	for item in menu_items:
-            item_details = re.match('(\d)\.\s+(.*)', item)
-            if item_details:
-		results = item_details.groups()
-                menu[results[1]] = results[0]
-
-	return menu
-
-    def parse_main_menu(self):
-	return self.parse_menu(self.main_menu())
-
-    def main_menu(self):
-	return self.modem.sendUssd('#100#')
-
-    @property
-    def phone_number(self):
-        response = self.modem.sendUssd('#150#')
-	return response.message.split('\r\n')[1]
-
-    @property
-    def balance(self):
-        response = self.main_menu()
-        response.cancel()
-        balance = re.search('\$(.*?)\s', response.message)
-        if balance:
-            return float(balance.groups()[0])
-
-    @property
-    def expiry_date(self):
-        response = self.main_menu()
-        response.cancel()
-        expiry = re.search('Exp.*?\s(.*?)\r\n', response.message)
-        if expiry:
-            return datetime.datetime.strptime(expiry.groups()[0], '%d %b %Y')
-
-    def balance_plus_packs(self):
-        pass
-
-    def balance_call_credits(self):
-        pass
-
-    def creditme2u(self, phone_number, amount):
-	""" Performs the Credit Me2U action for your service.
-
-	phone_number
-	    String-based phone number that you want to send credit to.
-	amount
-	    Amount of money you would like to send. At the time of writing,
-	    only whole-dollar amounts between $1 and $10 are supported,
-	    up to a maximum of $10 in total per day.
-	"""
-	menu = self.main_menu()
-	option = menu['CredMe2U']
-	confirmation = response.reply(option).reply(phone_number).reply(amount)
-        if str(phone_number) in confirmation.message and \
-                '$%s' % amount in confirmation.message:
-            success = confirmation.reply('1')
-	else:
-            raise ValueError("Didn't receive confirmation correctly.")
-
-        success.cancel()
-	return success.message
-
-
-def autodetect(phone_number=None):
-
     ports = serialenum.enumerate()
     modem = None
 
     for port in ports:
-        modem = Modem(port, baudrate=9600)
+        modem = GsmModem(port, **modem_options)
         try:
             modem.connect()
-            prepaid = PrepaidAccount(modem)
-            if phone_number and prepaid.phone_number != phone_number:
-		prepaid.modem.close()
+            if check_fn and not check_fn(modem):
+                modem.close()
+                modem = None
                 continue
             break
-	except SerialException:
+        except SerialException:
             pass
         except TimeoutException:
             pass

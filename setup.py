@@ -45,10 +45,12 @@ setup(name='telstra.mobile',
           'python-gsmmodem',
           'pyserial',
           'serialenum',
+          'lazy',
           # -*- Extra requirements: -*-
       ],
       extras_require={
-          'test': ['nose']
+          'test': ['nose'],
+          'doc': ['sphinx'],
       },
       entry_points="""
       # -*- Entry points: -*-
