@@ -27,6 +27,10 @@ fake-eggs/
 parts/
 dist/
 var/
+include/
+lib/
+local/
+docs/_build/
 
 
 
