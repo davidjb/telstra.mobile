@@ -1,3 +1,5 @@
+import re
+
 from lazy import lazy
 
 from telstra.mobile.modem import autodetect_modem
@@ -29,7 +31,7 @@ class TelstraAccount(object):
         menu_items = ussd.message.split('\r\n')
         menu = {}
         for item in menu_items:
-            item_details = re.match('(\d)\.\s+(.*)', item)
+            item_details = re.match('(\d+)\.\s+(.*)', item)
             if item_details:
                 results = item_details.groups()
                 menu[results[1]] = results[0]
@@ -65,6 +67,7 @@ class TelstraAccount(object):
         """
         response = self.modem.sendUssd('#125#')
         return 'Bal:' in response.message
+
 
 class Postpaid(TelstraAccount):
     """ A Postpaid Telstra account that can interact with network servies.
