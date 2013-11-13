@@ -5,8 +5,9 @@ import logging
 import os
 
 from telstra.mobile import autodetect_account
+from telstra.mobile.config import LOG_FORMAT
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
 log = logging.getLogger(__name__)
 
 def main():
