@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 
 from lazy import lazy
 
@@ -18,6 +19,8 @@ class TelstraAccount(object):
 
     def close(self):
         """ Close the underlying modem interface.
+
+	Conform to the ``contextlib`` closing interface.
         """
         self.modem.close()
 
@@ -38,17 +41,17 @@ class TelstraAccount(object):
 
         return menu
 
+    def main_menu(self):
+        """ Load a USSD session to the main #100# menu.
+        """
+        return self.modem.sendUssd('#100#')
+
     def main_menu_parsed(self):
         """ Load and parse the main menu ino a numerically-keyed structure.
 
         :rtype: dict
         """
         return self.parse_menu(self.main_menu())
-
-    def main_menu(self):
-        """ Load a USSD session to the main #100# menu.
-        """
-        return self.modem.sendUssd('#100#')
 
     @lazy
     def phone_number(self):
@@ -95,7 +98,7 @@ class Prepaid(TelstraAccount):
         response.cancel()
         expiry = re.search('Exp.*?\s(.*?)\r\n', response.message)
         if expiry:
-            return datetime.datetime.strptime(expiry.groups()[0], '%d %b %Y')
+            return datetime.strptime(expiry.groups()[0], '%d %b %Y')
 
     def balance_plus_packs(self):
         pass
@@ -106,29 +109,39 @@ class Prepaid(TelstraAccount):
     def creditme2u(self, phone_number, amount):
         """ Performs the Credit Me2U action for your service.
 
-        :param phone_number: String-based phone number that you want to send credit to.
-        :param amount: Amount of money you would like to send. At the time of
-            writing, only whole-dollar amounts between $1 and $10 are supported, up
-            to a maximum of $10 in total per day.
+	:param phone_number: String-based phone number that you want to send
+	    credit to.
+	:param amount: Amount of money you would like to send. At the time of
+	    writing, only whole-dollar amounts between $1 and $10 are supported,
+	    up to a maximum of $10 in total per day.
         :returns: Successful USSD message string indicating actions taken.
 
         This method attempts to detect the CreditMe2U functionality
         """
-        menu = self.main_menu()
+        response = self.main_menu()
+	menu = self.parse_menu(response)
 
-        #Try loading the pre-paid string or post-paid string
-        option = menu.get('CredMe2U', menu.get('Credit Me2U'))
-        if not option:
+        #Try accessing the Recharge section 
+        option = menu.get('Recharge')
+	if not option:
+            raise ValueError('Could not detect Recharge as being available.')
+
+        #Traverse to Recharge option
+	response = response.reply(option)
+	menu = self.parse_menu(response)
+
+        option = menu.get('CreditMe2U', menu.get('CredMe2U', menu.get('Credit Me2U')))
+	if not option:
             raise ValueError('Could not detect Credit Me2U as being available.')
 
         confirmation = response.reply(option).reply(phone_number).reply(amount)
         if str(phone_number) in confirmation.message and \
             '$%s' % amount in confirmation.message:
-             success = confirmation.reply('1')
+            response = confirmation.reply('1')
         else:
+            response.cancel()
             raise ValueError("Didn't receive confirmation correctly.")
-            success.cancel()
-        return success.message
+        return response
 
 
 def check_phone_number(modem, phone_number):
@@ -142,7 +155,8 @@ def check_phone_number(modem, phone_number):
     account = TelstraAccount(modem)
     return account.phone_number == phone_number
 
-def autodetect_account(phone_number=None):
+
+def autodetect_account(phone_number=None, check=None):
     """ Autodetect a suitable Telstra account on a cellular modem.
 
     :param phone_number: The phone number of the SIM to detect in the system.
@@ -162,10 +176,13 @@ def autodetect_account(phone_number=None):
     The final account is returned and is ready for interaction with the
     network.
     """
-    #Convert the account into Prepaid or Postpaid based upon accessing #125# -> Boolean
-    check = lambda modem: check_phone_number(modem, phone_number)
+    if phone_number and not check:
+	#Simple equality check on phone number
+	check = lambda modem: check_phone_number(modem, phone_number)
+
     modem = autodetect_modem(check_fn=check)
     if modem:
         account = TelstraAccount(modem)
         return Prepaid(modem) if account.is_prepaid else Postpaid(modem)
+
 

@@ -100,6 +100,13 @@ Install
    to connect to. See `Quickstart`_ above.
 
 
+Scripts
+-------
+
+* ``bin/send-credit`` - sends credit to a nominated Telstra prepaid phone number by utilising
+  the relevant USSD menus and options.
+
+
 Useful links
 ------------
 

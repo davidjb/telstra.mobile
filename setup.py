@@ -49,10 +49,12 @@ setup(name='telstra.mobile',
           # -*- Extra requirements: -*-
       ],
       extras_require={
-          'test': ['nose'],
+          'test': [],
           'doc': ['sphinx'],
       },
       entry_points="""
       # -*- Entry points: -*-
+      [console_scripts]
+      send-credit = telstra.mobile.scripts.send_credit:main
       """,
       )
