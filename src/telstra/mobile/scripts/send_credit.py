@@ -49,6 +49,11 @@ def main():
             exit()
 
     #Automatically close modem after finishing
+    account = autodetect_account()
+    if not account:
+        log.critical("Couldn't detect a suitable modem or account.")
+        exit(1)
+        
     with closing(autodetect_account()) as account:
         log.info('Running send credit script...')
         try:

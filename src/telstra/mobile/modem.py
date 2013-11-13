@@ -3,8 +3,8 @@ import serialenum
 from gsmmodem.modem import GsmModem
 from gsmmodem.exceptions import TimeoutException
 from serial import SerialException
-logging.basicConfig(level=logging.DEBUG)
 
+log = logging.getLogger(__name__)
 
 
 def autodetect_modem(check_fn=None, modem_options={'baudrate': 9600}):
@@ -24,8 +24,14 @@ def autodetect_modem(check_fn=None, modem_options={'baudrate': 9600}):
     (if ``check_fn`` is specified), will be returned.
 
     All other unsuccessful connections will be closed during the process.
+
+    This method will return ``None`` if no modems could be detected.
     """
     ports = serialenum.enumerate()
+    if not ports:
+       log.error('No modem ports detected on system.')
+       return
+
     modem = None
 
     for port in ports:
