@@ -1,16 +1,19 @@
 
+import datetime
 import unittest
 
 from telstra.mobile.account import TelstraAccount
 from telstra.mobile.tests import dummy_modem_cls, dummy_enumerate_ports
 
 
-MENU = 'Bal:$123.45 *\r\nExp 12 Mar 2010\r\n1. Recharge\r\n2. Balance\r\n3. My Offer\r\n4. PlusPacks\r\n5. Tones&Extras\r\n6. History\r\n7. CredMe2U\r\n8. Hlp\r\n00. Home\r\n*charges can take 48hrs'
+MENU = 'Bal:$123.45 *\r\nExp 12 Aug 2007\r\n1. Recharge\r\n2. Balance\r\n3. My Offer\r\n4. PlusPacks\r\n5. Tones&Extras\r\n6. History\r\n7. CredMe2U\r\n8. Hlp\r\n00. Home\r\n*charges can take 48hrs'
 
 
 def dummy_response(message_):
     class DummyResponse(object):
         message = message_
+        def cancel(self):
+            self.cancelled = True
     return DummyResponse()
 
 
@@ -53,15 +56,25 @@ class TestAccount(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def _autodetect_account(self, class_=PrepaidAccountGsmModem):
+    def _autodetect_account(self, class_=PrepaidAccountGsmModem, phone_number=None):
         from telstra.mobile import modem
         modem.GsmModem = class_ 
         modem.enumerate_serial = dummy_enumerate_ports(['/dev/ttyS0'])
         from telstra.mobile import autodetect_account
-        return autodetect_account()
+        return autodetect_account(phone_number=phone_number)
 
     def test_autodetect(self):
         account = self._autodetect_account()
+        self.assertIsNotNone(account)
+        self.assertEqual(account.phone_number, '0412345678')
+
+    def test_autodetct_phone_number(self):
+        """ Test phone number detection to ensure account-specific functionality.
+        """
+        account = self._autodetect_account(phone_number='0400000000')
+        self.assertIsNone(account)
+
+        account = self._autodetect_account(phone_number='0412345678')
         self.assertIsNotNone(account)
         self.assertEqual(account.phone_number, '0412345678')
 
@@ -103,3 +116,20 @@ class TestAccount(unittest.TestCase):
         self.assertIsNotNone(menu)
         self.assertEqual(len(menu), 9)
         self.assertEqual(menu['Recharge'], '1')
+
+
+class TestPrepaidAccount(TestAccount):
+
+    def test_balance(self):
+        account = self._autodetect_account()
+        self.assertEqual(account.balance, 123.45)
+
+    def test_expiry_date(self):
+        account = self._autodetect_account()
+        self.assertEqual(account.expiry_date, datetime.datetime(2007, 8, 12, 0, 0))
+
+    def test_creditme2u(self):
+        return
+        account = self._autodetect_account()
+        response = account.creditme2u('0499888777', 10)
+    
