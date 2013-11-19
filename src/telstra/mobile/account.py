@@ -113,11 +113,17 @@ class Prepaid(TelstraAccount):
 	    credit to.
 	:param amount: Amount of money you would like to send. At the time of
 	    writing, only whole-dollar amounts between $1 and $10 are supported,
-	    up to a maximum of $10 in total per day.
+	    up to a maximum of $10 in total per day. Enter this value as
+            either an integer or string equivalent.
         :returns: Successful USSD message string indicating actions taken.
 
         This method attempts to detect the CreditMe2U functionality
         """
+        amount = int(str(amount).replace('$', ''))
+        if amount < 1 or amount > 10:
+            raise ValueError("Could not parse the amount specified.")
+        amount = str(amount)
+        
         response = self.main_menu()
 	menu = self.parse_menu(response)
 
