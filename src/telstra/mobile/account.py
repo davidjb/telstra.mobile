@@ -1,8 +1,10 @@
 import re
 from datetime import datetime
+import time
 
 from lazy import lazy
 
+from gsmmodem.exceptions import CommandError
 from telstra.mobile.modem import autodetect_modem
 
 
@@ -23,6 +25,12 @@ class TelstraAccount(object):
 	Conform to the ``contextlib`` closing interface.
         """
         self.modem.close()
+
+    def reconnect(self):
+	""" Close and reconnect underlying modem interface.
+	"""
+	self.close()
+	self.modem.connect()
 
     @classmethod
     def parse_menu(cls, ussd):
@@ -51,7 +59,9 @@ class TelstraAccount(object):
 
         :rtype: dict
         """
-        return self.parse_menu(self.main_menu())
+	menu = self.main_menu()
+	menu.cancel()
+        return self.parse_menu(menu)
 
     @lazy
     def phone_number(self):
@@ -60,6 +70,11 @@ class TelstraAccount(object):
         :rtype: str
         """
         response = self.modem.sendUssd('#150#')
+	if 'your mobile' not in response.message.lower():
+	    response.cancel()
+	    time.sleep(2)
+            response = self.modem.sendUssd('#150#')
+
         return response.message.split('\r\n')[1]
 
     @lazy
@@ -69,6 +84,7 @@ class TelstraAccount(object):
         :rtype: bool
         """
         response = self.modem.sendUssd('#125#')
+	response.cancel()
         return 'Bal:' in response.message
 
 
@@ -117,7 +133,7 @@ class Prepaid(TelstraAccount):
             either an integer or string equivalent.
         :returns: Successful USSD message string indicating actions taken.
 
-        This method attempts to detect the CreditMe2U functionality
+        This method attempts to detect the CreditMe2U functionality.
         """
         amount = int(str(amount).replace('$', ''))
         if amount < 1 or amount > 10:
@@ -144,9 +160,14 @@ class Prepaid(TelstraAccount):
         if str(phone_number) in confirmation.message and \
             '$%s' % amount in confirmation.message:
             response = confirmation.reply('1')
+	elif 'Insufficient credit' in confirmation.message:
+            raise ValueError("Insufficient credit in the account to send this credit.")
         else:
-            response.cancel()
-            raise ValueError("Didn't receive confirmation correctly.")
+	    try:
+                response.cancel()
+	    except CommandError:
+		pass
+            raise ValueError("Did not receive confirmation correctly.")
         return response
 
 
