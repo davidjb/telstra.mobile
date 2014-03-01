@@ -120,7 +120,31 @@ class Prepaid(TelstraAccount):
         pass
 
     def balance_call_credits(self):
-        pass
+	""" Obtain the 'Call Credits' balance for this service.
+
+	This method attempts to detect the Call Credits availability for
+	this service before proceeding.
+	"""
+	response = self.main_menu()
+	menu = self.parse_menu(response)
+
+        #Try accessing the Recharge section 
+        option = menu.get('Balance')
+	if not option:
+            raise ValueError('Could not detect Balance as being available.')
+
+	response = response.reply(option)
+
+	if not 'CallCredit' in response.message:
+            raise ValueError('Call credits are not available on this service.')
+
+	balance_page1 = response.reply('2')
+	balance_page2 = balance_page1.reply('0')
+	call_credit_text = balance_page1.message + balance_page2.message 
+
+        balance = re.search('\$(.*?)\s', call_credit_text)
+        if balance:
+            return float(balance.groups()[0])
 
     def creditme2u(self, phone_number, amount):
         """ Performs the Credit Me2U action for your service.

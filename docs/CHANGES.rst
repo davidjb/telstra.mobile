@@ -4,6 +4,8 @@ Changelog
 0.1-dev (unreleased)
 --------------------
 
+- Add call credit balance detection.
+  [davidjb]
 - Handle situation when accessing the modem immediately after initialisation.
   [davidjb]
 - Cancel various USSD sessions to prevent later errors.
