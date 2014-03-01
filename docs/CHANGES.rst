@@ -4,6 +4,10 @@ Changelog
 0.1-dev (unreleased)
 --------------------
 
+- Add ability for send credit script to detect modem phone number.
+  [davidjb]
+- Send credit script does not save data by default (runs unless told otherwise).
+  [davidjb]
 - Add call credit balance detection.
   [davidjb]
 - Handle situation when accessing the modem immediately after initialisation.
