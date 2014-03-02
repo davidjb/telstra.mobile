@@ -61,11 +61,11 @@ def main():
         log.critical("Couldn't detect a suitable modem or account.")
         exit(1)
         
-    with closing(autodetect_account()) as account:
+    with closing(account) as account_wrapped:
         log.info('Running send credit script...')
         try:
-            result = account.creditme2u(config.phone_number,
-                                        amount=config.amount)
+            result = account_wrapped.creditme2u(config.phone_number,
+                                                amount=config.amount)
             #Write out the current date and time to prevent re-running
             if config.data_location:
                 now = datetime.now()
