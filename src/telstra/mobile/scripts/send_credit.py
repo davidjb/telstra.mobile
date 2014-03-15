@@ -60,7 +60,7 @@ def main():
     if not account:
         log.critical("Couldn't detect a suitable modem or account.")
         exit(1)
-        
+
     with closing(account) as account_wrapped:
         log.info('Running send credit script...')
         try:
@@ -77,4 +77,3 @@ def main():
             log.error('Warning: failed to send credit to receiving phone.')
             #Scream louder here. Send an email?
             raise
-

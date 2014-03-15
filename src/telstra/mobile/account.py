@@ -22,23 +22,23 @@ class TelstraAccount(object):
     def close(self):
         """ Close the underlying modem interface.
 
-	Conform to the ``contextlib`` closing interface.
+        Conform to the ``contextlib`` closing interface.
         """
         self.modem.close()
 
     def reconnect(self):
-	""" Close and reconnect underlying modem interface.
-	"""
-	self.close()
-	self.modem.connect()
+        """ Close and reconnect underlying modem interface.
+        """
+        self.close()
+        self.modem.connect()
 
     @classmethod
     def parse_menu(cls, ussd):
-	""" Attempt to parse the menu options into a traversable structure.
+        """ Attempt to parse the menu options into a traversable structure.
 
     :returns: A numerically-keyed structure representing menu options.
     :rtype: dict
-	"""
+        """
         menu_items = ussd.message.split('\r\n')
         menu = {}
         for item in menu_items:
@@ -59,8 +59,8 @@ class TelstraAccount(object):
 
         :rtype: dict
         """
-	menu = self.main_menu()
-	menu.cancel()
+        menu = self.main_menu()
+        menu.cancel()
         return self.parse_menu(menu)
 
     @lazy
@@ -70,9 +70,9 @@ class TelstraAccount(object):
         :rtype: str
         """
         response = self.modem.sendUssd('#150#')
-	if 'your mobile' not in response.message.lower():
-	    response.cancel()
-	    time.sleep(2)
+        if 'your mobile' not in response.message.lower():
+            response.cancel()
+            time.sleep(2)
             response = self.modem.sendUssd('#150#')
 
         return response.message.split('\r\n')[1]
@@ -84,7 +84,7 @@ class TelstraAccount(object):
         :rtype: bool
         """
         response = self.modem.sendUssd('#125#')
-	response.cancel()
+        response.cancel()
         return 'Bal:' in response.message
 
 
@@ -95,6 +95,7 @@ class Postpaid(TelstraAccount):
     is added.
     """
     pass
+
 
 class Prepaid(TelstraAccount):
     """ A Prepaid Telstra account that can interact with network servies.
@@ -120,27 +121,27 @@ class Prepaid(TelstraAccount):
         pass
 
     def balance_call_credits(self):
-	""" Obtain the 'Call Credits' balance for this service.
+        """ Obtain the 'Call Credits' balance for this service.
 
-	This method attempts to detect the Call Credits availability for
-	this service before proceeding.
-	"""
-	response = self.main_menu()
-	menu = self.parse_menu(response)
+        This method attempts to detect the Call Credits availability for
+        this service before proceeding.
+        """
+        response = self.main_menu()
+        menu = self.parse_menu(response)
 
-        #Try accessing the Recharge section 
+        #Try accessing the Recharge section
         option = menu.get('Balance')
-	if not option:
+        if not option:
             raise ValueError('Could not detect Balance as being available.')
 
-	response = response.reply(option)
+        response = response.reply(option)
 
-	if not 'CallCredit' in response.message:
+        if not 'CallCredit' in response.message:
             raise ValueError('Call credits are not available on this service.')
 
-	balance_page1 = response.reply('2')
-	balance_page2 = balance_page1.reply('0')
-	call_credit_text = balance_page1.message + balance_page2.message 
+        balance_page1 = response.reply('2')
+        balance_page2 = balance_page1.reply('0')
+        call_credit_text = balance_page1.message + balance_page2.message
 
         balance = re.search('\$(.*?)\s', call_credit_text)
         if balance:
@@ -149,12 +150,12 @@ class Prepaid(TelstraAccount):
     def creditme2u(self, phone_number, amount):
         """ Performs the Credit Me2U action for your service.
 
-	:param phone_number: String-based phone number that you want to send
-	    credit to.
-	:param amount: Amount of money you would like to send. At the time of
-	    writing, only whole-dollar amounts between $1 and $10 are supported,
-	    up to a maximum of $10 in total per day. Enter this value as
-            either an integer or string equivalent.
+        :param phone_number: String-based phone number that you want to send
+            credit to.
+        :param amount: Amount of money you would like to send. At the time of
+            writing, only whole-dollar amounts between $1 and $10 are
+            supported, up to a maximum of $10 in total per day. Enter this
+            value as either an integer or string equivalent.
         :returns: Successful USSD message string indicating actions taken.
 
         This method attempts to detect the CreditMe2U functionality.
@@ -163,34 +164,36 @@ class Prepaid(TelstraAccount):
         if amount < 1 or amount > 10:
             raise ValueError("Could not parse the amount specified.")
         amount = str(amount)
-        
-        response = self.main_menu()
-	menu = self.parse_menu(response)
 
-        #Try accessing the Recharge section 
+        response = self.main_menu()
+        menu = self.parse_menu(response)
+
+        #Try accessing the Recharge section
         option = menu.get('Recharge')
-	if not option:
+        if not option:
             raise ValueError('Could not detect Recharge as being available.')
 
         #Traverse to Recharge option
-	response = response.reply(option)
-	menu = self.parse_menu(response)
+        response = response.reply(option)
+        menu = self.parse_menu(response)
 
-        option = menu.get('CreditMe2U', menu.get('CredMe2U', menu.get('Credit Me2U')))
-	if not option:
-            raise ValueError('Could not detect Credit Me2U as being available.')
+        option = menu.get('CreditMe2U',
+                          menu.get('CredMe2U',
+                                   menu.get('Credit Me2U')))
+        if not option:
+            raise ValueError('Could not detect Credit Me2U functionality.')
 
         confirmation = response.reply(option).reply(phone_number).reply(amount)
         if str(phone_number) in confirmation.message and \
-            '$%s' % amount in confirmation.message:
+                '$%s' % amount in confirmation.message:
             response = confirmation.reply('1')
-	elif 'Insufficient credit' in confirmation.message:
-            raise ValueError("Insufficient credit in the account to send this credit.")
+        elif 'Insufficient credit' in confirmation.message:
+            raise ValueError("Insufficient credit account to send credit.")
         else:
-	    try:
+            try:
                 response.cancel()
-	    except CommandError:
-		pass
+            except CommandError:
+                pass
             raise ValueError("Did not receive confirmation correctly.")
         return response
 
@@ -228,12 +231,10 @@ def autodetect_account(phone_number=None, check=None):
     network.
     """
     if phone_number and not check:
-	#Simple equality check on phone number
-	check = lambda modem: check_phone_number(modem, phone_number)
+        #Simple equality check on phone number
+        check = lambda modem: check_phone_number(modem, phone_number)
 
     modem = autodetect_modem(check_fn=check)
     if modem:
         account = TelstraAccount(modem)
         return Prepaid(modem) if account.is_prepaid else Postpaid(modem)
-
-
