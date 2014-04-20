@@ -32,6 +32,7 @@ class TelstraAccount(object):
         self.close()
         self.modem.connect()
 
+
     @classmethod
     def parse_menu(cls, ussd):
         """ Attempt to parse the menu options into a traversable structure.
@@ -89,6 +90,7 @@ class TelstraAccount(object):
 
 
 class Postpaid(TelstraAccount):
+
     """ A Postpaid Telstra account that can interact with network servies.
 
     At present, this is simply a place-holder until additional functionality
@@ -98,6 +100,7 @@ class Postpaid(TelstraAccount):
 
 
 class Prepaid(TelstraAccount):
+
     """ A Prepaid Telstra account that can interact with network servies.
     """
 
@@ -129,7 +132,7 @@ class Prepaid(TelstraAccount):
         response = self.main_menu()
         menu = self.parse_menu(response)
 
-        #Try accessing the Recharge section
+        # Try accessing the Recharge section
         option = menu.get('Balance')
         if not option:
             raise ValueError('Could not detect Balance as being available.')
@@ -168,12 +171,12 @@ class Prepaid(TelstraAccount):
         response = self.main_menu()
         menu = self.parse_menu(response)
 
-        #Try accessing the Recharge section
+        # Try accessing the Recharge section
         option = menu.get('Recharge')
         if not option:
             raise ValueError('Could not detect Recharge as being available.')
 
-        #Traverse to Recharge option
+        # Traverse to Recharge option
         response = response.reply(option)
         menu = self.parse_menu(response)
 
@@ -231,7 +234,7 @@ def autodetect_account(phone_number=None, check=None):
     network.
     """
     if phone_number and not check:
-        #Simple equality check on phone number
+        # Simple equality check on phone number
         check = lambda modem: check_phone_number(modem, phone_number)
 
     modem = autodetect_modem(check_fn=check)
