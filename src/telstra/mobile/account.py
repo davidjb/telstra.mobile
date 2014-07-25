@@ -107,7 +107,7 @@ class Prepaid(TelstraAccount):
         response.cancel()
         balance = re.search('\$(.*?)\s', response.message)
         if balance:
-            return float(balance.groups()[0])
+            return float(balance.groups()[0].replace(',', ''))
 
     @property
     def expiry_date(self):
