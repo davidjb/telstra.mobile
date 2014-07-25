@@ -13,8 +13,8 @@ def autodetect_modem(pin=None, check_fn=None, modem_options={'baudrate': 9600}):
     :param pin: Security PIN to unlock the SIM.
     :param check_cn: Callable that should take a single ``modem`` argument
         and return True if the modem instance is suitable.
-    :param modem_options: Structure to pass as keyword arguments to ``GsmModem``
-        initialisation.
+    :param modem_options: Structure to pass as keyword arguments to
+        ``GsmModem`` initialisation.
     :type modem_options: dict-like
     :returns: Connected modem instance
     :rtype: :class:`gsmmodem.modem.GsmModem`
@@ -30,8 +30,8 @@ def autodetect_modem(pin=None, check_fn=None, modem_options={'baudrate': 9600}):
     """
     ports = enumerate_serial()
     if not ports:
-       log.error('No modem ports detected on system.')
-       return
+        log.error('No modem ports detected on system.')
+        return
 
     modem = None
 
@@ -47,3 +47,5 @@ def autodetect_modem(pin=None, check_fn=None, modem_options={'baudrate': 9600}):
             log.info('Timeout detected on port %s' % port)
 
         modem.close()
+
+    return modem

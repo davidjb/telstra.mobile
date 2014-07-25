@@ -1,6 +1,5 @@
 import unittest
 
-from gsmmodem import modem 
 from gsmmodem.exceptions import TimeoutException
 from serial import SerialException
 
