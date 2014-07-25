@@ -38,14 +38,16 @@ def autodetect_modem(pin=None, check_fn=None, modem_options={'baudrate': 9600}):
     for port in ports:
         modem = GsmModem(port, **modem_options)
         try:
+            log.debug('Attempting to connect to modem at %s' % port)
             modem.connect(pin=pin)
-            if check_fn and check_fn(modem):
+            if not check_fn or check_fn and check_fn(modem):
+                log.debug('Successfully detected modem at %s' % port)
                 return modem
         except SerialException:
             log.info('Serial communication problem for port %s' % port)
         except TimeoutException:
             log.info('Timeout detected on port %s' % port)
 
+        log.debug('Closing modem at %s' % port)
         modem.close()
 
-    return modem

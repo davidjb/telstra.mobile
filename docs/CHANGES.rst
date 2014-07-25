@@ -4,6 +4,8 @@ Changelog
 0.1-dev (unreleased)
 --------------------
 
+- Fix issue with autodetection probing all modems when the first one works.
+  [davidjb]
 - Add ability to initialise modem and account with PIN.
   [davidjb]
 - Add ability for send credit script to detect modem phone number.
