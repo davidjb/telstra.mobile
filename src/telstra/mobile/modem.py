@@ -7,9 +7,10 @@ from serial import SerialException
 log = logging.getLogger(__name__)
 
 
-def autodetect_modem(check_fn=None, modem_options={'baudrate': 9600}):
+def autodetect_modem(pin=None, check_fn=None, modem_options={'baudrate': 9600}):
     """ Autodetect a suitable cellular modem connected to the system.
 
+    :param pin: Security PIN to unlock the SIM.
     :param check_cn: Callable that should take a single ``modem`` argument
         and return True if the modem instance is suitable.
     :param modem_options: Structure to pass as keyword arguments to ``GsmModem``
@@ -37,16 +38,12 @@ def autodetect_modem(check_fn=None, modem_options={'baudrate': 9600}):
     for port in ports:
         modem = GsmModem(port, **modem_options)
         try:
-            modem.connect()
-            if check_fn and not check_fn(modem):
-                modem.close()
-                modem = None
-                continue
-            break
+            modem.connect(pin=pin)
+            if check_fn and check_fn(modem):
+                return modem
         except SerialException:
             log.info('Serial communication problem for port %s' % port)
         except TimeoutException:
             log.info('Timeout detected on port %s' % port)
 
-    return modem
-
+        modem.close()

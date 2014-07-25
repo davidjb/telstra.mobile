@@ -4,7 +4,7 @@ import time
 
 from lazy import lazy
 
-from gsmmodem.exceptions import CommandError
+from gsmmodem.exceptions import CommandError, TimeoutException
 from telstra.mobile.modem import autodetect_modem
 
 
@@ -12,12 +12,13 @@ class TelstraAccount(object):
     """ Base Telstra mobile account, shared features between types.
     """
 
-    def __init__(self, modem):
+    def __init__(self, modem, pin=None):
         """ Initialise Telstra account with a modem inteface.
 
         :param modem: Instance of :class:`gsmmodem.GsmModem`
         """
         self.modem = modem
+        self.pin = pin
 
     def close(self):
         """ Close the underlying modem interface.
@@ -30,7 +31,7 @@ class TelstraAccount(object):
 	""" Close and reconnect underlying modem interface.
 	"""
 	self.close()
-	self.modem.connect()
+	self.modem.connect(pin=self.pin)
 
     @classmethod
     def parse_menu(cls, ussd):
@@ -188,7 +189,7 @@ class Prepaid(TelstraAccount):
             raise ValueError("Insufficient credit in the account to send this credit.")
         else:
 	    try:
-                response.cancel()
+                response.reply('00').cancel()
 	    except CommandError:
 		pass
             raise ValueError("Did not receive confirmation correctly.")
@@ -207,10 +208,11 @@ def check_phone_number(modem, phone_number):
     return account.phone_number == phone_number
 
 
-def autodetect_account(phone_number=None, check=None):
+def autodetect_account(phone_number=None, pin=None, check=None):
     """ Autodetect a suitable Telstra account on a cellular modem.
 
     :param phone_number: The phone number of the SIM to detect in the system.
+    :param pin: The security PIN for the SIM, if required.
     :returns: Instance of :class:`Prepaid` or :class:`Postpaid`, depending
               on detected account type.
 
@@ -231,9 +233,15 @@ def autodetect_account(phone_number=None, check=None):
 	#Simple equality check on phone number
 	check = lambda modem: check_phone_number(modem, phone_number)
 
-    modem = autodetect_modem(check_fn=check)
+    modem = autodetect_modem(pin=pin, check_fn=check)
     if modem:
-        account = TelstraAccount(modem)
-        return Prepaid(modem) if account.is_prepaid else Postpaid(modem)
-
+        account = TelstraAccount(modem, pin=pin)
+        try:
+            if account.is_prepaid:
+                return Prepaid(modem, pin=pin)
+            else: 
+                return Postpaid(modem, pin=pin)
+        except TimeoutException:
+            return Prepaid(modem, pin=pin)
+            
 

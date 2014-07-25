@@ -23,7 +23,7 @@ def dummy_modem_cls(connect_raises=None, valid_ports=None):
            self.args = args
            self.kwargs = kwargs
 
-        def connect(self):
+        def connect(self, pin=None):
             if (valid_ports is not None and self.port not in valid_ports):
                 raise connect_raises()
 
