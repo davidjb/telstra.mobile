@@ -45,6 +45,7 @@ setup(name='telstra.mobile',
           'pyserial',
           'serialenum',
           'lazy',
+          'requests',
           # -*- Extra requirements: -*-
       ],
       extras_require={
