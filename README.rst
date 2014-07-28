@@ -4,24 +4,28 @@ Telstra Mobile API for Python
 .. contents::
 
 A potentially vain attempt at creating an API to interact with some of
-Telstra's services for mobile.  
+Telstra's services for mobile.  At present, this library handles:
+
+* Majority of key functionality for USSD via hardware modem
+* Some web-based prepaid account interrogation
 
 Other Telstra services can be added later into the top-level ``telstra.``
-namespace, potentially by other developers. 
+namespace, potentially by other developers.
 
 Quickstart
 ----------
 
 Install this library with ``pip install telstra.mobile``, make sure
-you have a supported 3G modem plugged in with a Telstra SIM card 
+you have a supported 3G modem plugged in with a Telstra SIM card
 installed. See Install_ section later for full details.
 
 An example is worth a thousand words, so let's just jump straight into
-it.  
+it.
 
 .. code:: python
 
     from telstra.mobile import autodetect_account
+    account = autodetect_account()
     account = autodetect_account('0412345678')
 
     # Detected via the network
@@ -40,6 +44,10 @@ service.
 So, now, you have an ``account`` that gives you access to common cellular
 commands that you'd normally be able to manually perform with USSD. A variety
 of operations are automated, such as balance & expiry checking.
+
+This library allows auto-detection either without a phone number, being
+the first available physical modem that responds, or with a phone number, and
+the modem/account must conform to the given number.
 
 If you're already got a pre-existing `python-gsmmodem`_ modem instance
 available to you, then you can re-use this by passing it directly during
@@ -104,7 +112,9 @@ Scripts
 -------
 
 * ``bin/send-credit`` - sends credit to a nominated Telstra prepaid phone number by utilising
-  the relevant USSD menus and options.
+  the relevant USSD menus and options. This script can automatically run based
+  on a number of conditions when called (such as target account balance and
+  expiry).
 
 
 Useful links

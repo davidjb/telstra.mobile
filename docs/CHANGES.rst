@@ -4,6 +4,10 @@ Changelog
 0.1-dev (unreleased)
 --------------------
 
+- Improve send credit script with web API calls.
+  [davidjb]
+- Add web based prepaid metadata API.
+  [davidjb]
 - Fix issue with autodetection probing all modems when the first one works.
   [davidjb]
 - Add ability to initialise modem and account with PIN.
