@@ -142,7 +142,7 @@ def main():
             result = account_wrapped.creditme2u(config.phone_number,
                                                 amount=config.amount)
             # Write out the current date and time to prevent re-running
-            if config.data_location:
+            if config.mode == 'periodic' and config.data_location:
                 now = datetime.now()
                 with open(config.data_location, 'wb') as data_file:
                     data_file.write(now.strftime(config.datetime_format))
