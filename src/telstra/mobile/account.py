@@ -28,17 +28,17 @@ class TelstraAccount(object):
         self.modem.close()
 
     def reconnect(self):
-	""" Close and reconnect underlying modem interface.
-	"""
-	self.close()
-	self.modem.connect(pin=self.pin)
+        """ Close and reconnect underlying modem interface.
+        """
+        self.close()
+        self.modem.connect(pin=self.pin)
 
     @classmethod
     def parse_menu(cls, ussd):
         """ Attempt to parse the menu options into a traversable structure.
 
-    :returns: A numerically-keyed structure representing menu options.
-    :rtype: dict
+        :returns: A numerically-keyed structure representing menu options.
+        :rtype: dict
         """
         menu_items = ussd.message.split('\r\n')
         menu = {}
@@ -90,7 +90,6 @@ class TelstraAccount(object):
 
 
 class Postpaid(TelstraAccount):
-
     """ A Postpaid Telstra account that can interact with network servies.
 
     At present, this is simply a place-holder until additional functionality
@@ -100,7 +99,6 @@ class Postpaid(TelstraAccount):
 
 
 class Prepaid(TelstraAccount):
-
     """ A Prepaid Telstra account that can interact with network servies.
     """
 
@@ -192,12 +190,14 @@ class Prepaid(TelstraAccount):
             response = confirmation.reply('1')
         elif 'Insufficient credit' in confirmation.message:
             raise ValueError("Insufficient credit account to send credit.")
+        elif 'transfer limit' in confirmation.message:
+            raise ValueError(confirmation.message)
         else:
-	    try:
+            try:
                 response.reply('00').cancel()
-	    except CommandError:
-		pass
-            raise ValueError("Did not receive confirmation correctly.")
+            except CommandError:
+                pass
+            raise ValueError("Did not receive CreditMe2U confirmation correctly.")
         return response
 
 

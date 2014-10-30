@@ -150,5 +150,5 @@ def main():
             log.info('Credit sent successfully.')
         except:
             log.error('Warning: failed to send credit to receiving phone.')
-            # Scream louder here. Send an email?
+            # Scream louder here. Send an email or text message?
             raise
