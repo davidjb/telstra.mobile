@@ -47,7 +47,6 @@ setup(name='telstra.mobile',
           'lazy',
           'requests',
           'envelopes',
-          'begins',
           # -*- Extra requirements: -*-
       ],
       extras_require={
