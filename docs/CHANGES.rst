@@ -4,6 +4,9 @@ Changelog
 0.1-dev (unreleased)
 --------------------
 
+- Add option to either responsively or immediately send credit to send
+  credit script.
+  [davidjb]
 - Improve send credit script with web API calls.
   [davidjb]
 - Add web based prepaid metadata API.

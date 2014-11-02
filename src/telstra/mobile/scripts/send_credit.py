@@ -37,6 +37,11 @@ def main():
         dest='mode',
         help='mode of operation to use for sending credit')
 
+    # Options for immediate operation
+    subparsers.add_parser(
+        'immediate',
+        help='immediately send credit')
+
     # Options for web API-based operation
     responsive_parser = subparsers.add_parser(
         'responsive',
@@ -93,6 +98,9 @@ def main():
     log_level = logging.CRITICAL - config.verbose * 10
     logging.basicConfig(level=log_level, format=LOG_FORMAT)
 
+    if config.mode == 'immediate':
+        # Just send credit right now regardless
+        pass
     if config.mode == 'responsive':
         # Check the specified command-line conditions
         api = TelstraWebApi(config.user, config.password)
