@@ -64,6 +64,16 @@ class TelstraAccount(object):
         menu.cancel()
         return self.parse_menu(menu)
 
+    def process_response_more(self, ussd):
+        """ Recursively process a USSD response for more Telstra info.
+        """
+        menu = self.parse_menu(ussd)
+        if 'More' in menu:
+            response = ussd.reply(menu['More'])
+            return ussd.message + self.process_response_more(response)
+        else:
+            return ussd.message
+
     @lazy
     def phone_number(self):
         """ Determine the phone number for the given service.
@@ -79,6 +89,20 @@ class TelstraAccount(object):
         return response.message.split('\r\n')[1]
 
     @lazy
+    def account_number(self):
+        """ Determine the Telstra account number for the service.
+
+        :rtype: str
+        """
+        response = self.modem.sendUssd('#150#')
+        if 'your mobile' not in response.message.lower():
+            response.cancel()
+            time.sleep(2)
+            response = self.modem.sendUssd('#150#')
+
+        return response.message.split('\r\n')[-1]
+
+    @lazy
     def is_prepaid(self):
         """ Determine if the given service is pre- or post-paid.
 
@@ -86,7 +110,7 @@ class TelstraAccount(object):
         """
         response = self.modem.sendUssd('#125#')
         response.cancel()
-        return 'Bal:' in response.message
+        return 'Bal:' in response.message and 'Exp:' in response.message
 
 
 class Postpaid(TelstraAccount):
@@ -131,18 +155,17 @@ class Prepaid(TelstraAccount):
         menu = self.parse_menu(response)
 
         # Try accessing the Recharge section
-        option = menu.get('Balance')
+        option = menu.get('Bal Details')
         if not option:
-            raise ValueError('Could not detect Balance as being available.')
+            raise ValueError('Could not detect Bal Details as being available.')
 
         response = response.reply(option)
 
-        if not 'CallCredit' in response.message:
+        if not 'Call Cred Bal' in response.message:
             raise ValueError('Call credits are not available on this service.')
 
         balance_page1 = response.reply('2')
-        balance_page2 = balance_page1.reply('0')
-        call_credit_text = balance_page1.message + balance_page2.message
+        call_credit_text = self.process_response_more(balance_page1)
 
         balance = re.search('\$(.*?)\s', call_credit_text)
         if balance:
