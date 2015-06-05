@@ -1,8 +1,8 @@
 Changelog
 =========
 
-0.1-dev (unreleased)
---------------------
+0.1 (2015-06-05)
+----------------
 
 - Add option to either responsively or immediately send credit to send
   credit script.
