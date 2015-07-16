@@ -25,8 +25,11 @@ it.
 .. code:: python
 
     from telstra.mobile import autodetect_account
-    account = autodetect_account()
-    account = autodetect_account('0412345678')
+    
+    # detect first available account
+    account = autodetect_account()  
+    # detect specific phone number
+    account = autodetect_account('0412345678')  
 
     # Detected via the network
     account.phone_number
