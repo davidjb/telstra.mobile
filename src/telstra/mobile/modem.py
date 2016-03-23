@@ -44,9 +44,9 @@ def autodetect_modem(pin=None, check_fn=None, modem_options={'baudrate': 9600}):
                 log.debug('Successfully detected modem at %s' % port)
                 return modem
         except SerialException:
-            log.info('Serial communication problem for port %s' % port)
+            log.warn('Serial communication problem for port %s' % port)
         except TimeoutException:
-            log.info('Timeout detected on port %s' % port)
+            log.warn('Timeout detected on port %s' % port)
 
         log.debug('Closing modem at %s' % port)
         modem.close()
