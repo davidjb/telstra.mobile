@@ -33,7 +33,8 @@ local/
 docs/_build/
 .Python
 src/python-gsmmodem
-
+.buildout
+.eggs
 
 
 # OSX
