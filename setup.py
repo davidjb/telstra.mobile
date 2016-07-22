@@ -57,5 +57,6 @@ setup(name='telstra.mobile',
       # -*- Entry points: -*-
       [console_scripts]
       send-credit = telstra.mobile.scripts.send_credit:main
+      get-balance = telstra.mobile.scripts.get_balance:main
       """,
       )
